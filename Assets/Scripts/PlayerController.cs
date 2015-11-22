@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
 	private const int MIN_SPEED = 1;
 	private const int NUMBER_OF_GHOSTS = 8;
 
-	void Start () 
+	void Start ()
 	{
 		_rotationSpeed = _rotationSpeed < MIN_SPEED ? MIN_SPEED : _rotationSpeed;
 		_moveSpeed = _moveSpeed < MIN_SPEED ? MIN_SPEED : _moveSpeed;
@@ -125,21 +125,26 @@ public class PlayerController : MonoBehaviour
 
 	private void SwapGhost()
 	{
-		if (OriginalShipIsVisible ())
+		if (ShipIsVisible (_ship))
 			return;
 
-		//TODO
-		Debug.LogWarning ("LOST");
+		foreach (var ghost in _ghosts) 
+		{
+			if(ShipIsVisible(ghost))
+			{
+				_ship.transform.position = ghost.transform.position;
+				break;
+			}
+		}
 	}
 
-	private bool OriginalShipIsVisible()
+	private bool ShipIsVisible(GameObject ship)
 	{
-		//FIXME
-		if (_ship == null)
+		if (ship == null)
 			return false;
 
-		var shipPosition = _ship.transform.position;
-		Vector2 shipScale = _ship.transform.localScale;
+		var shipPosition = ship.transform.position;
+		Vector2 shipScale = ship.transform.localScale;
 		Vector2[] shipVertices = new Vector2[4];
 		shipVertices[0] = new Vector2(shipPosition.x - shipScale.x / 2f, shipPosition.y - shipScale.y / 2f);
 		shipVertices[1] = new Vector2(shipPosition.x + shipScale.x / 2f, shipPosition.y + shipScale.y / 2f);
@@ -148,16 +153,17 @@ public class PlayerController : MonoBehaviour
 
 		foreach(var vertex in shipVertices)
 		{
-			if(_screenRect.Contains(vertex))
+			if(!_screenRect.Contains(vertex))
 			   continue;
-			return false;
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 	
 	void OnDrawGizmos()
 	{
+		//draw camera
 		Gizmos.color = Color.white;
 		
 		Vector2 screenBottomLeft  = Camera.main.ViewportToWorldPoint (Vector2.zero);
@@ -174,6 +180,7 @@ public class PlayerController : MonoBehaviour
 		if (!Application.isPlaying)
 			return;
 
+		//draw ghosts
 		Gizmos.color = Color.red;
 
 		Vector2 ghostScale = _ship.transform.localScale;
@@ -190,9 +197,15 @@ public class PlayerController : MonoBehaviour
 			Gizmos.DrawLine(ghostBottomRigth, ghostTopLeft);
 		}
 
-		Gizmos.DrawLine (_screenRect.min, _screenRect.max);
+		//draw rect
+		Gizmos.color = Color.green;
+		Gizmos.DrawLine (new Vector2(_screenRect.xMin, _screenRect.yMin), new Vector2(_screenRect.xMin, _screenRect.yMax));
+		Gizmos.DrawLine (new Vector2(_screenRect.xMin, _screenRect.yMax), new Vector2(_screenRect.xMax, _screenRect.yMax));
+		Gizmos.DrawLine (new Vector2(_screenRect.xMax, _screenRect.yMax), new Vector2(_screenRect.xMax, _screenRect.yMin));
+		Gizmos.DrawLine (new Vector2(_screenRect.xMax, _screenRect.yMin), new Vector2(_screenRect.xMin, _screenRect.yMin));
 
-		if (OriginalShipIsVisible())
+		//draw out ship
+		if (ShipIsVisible(_ship))
 			return;
 
 		Gizmos.color = Color.yellow;
